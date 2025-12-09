@@ -98,11 +98,11 @@ AVL* insertionAVL(AVL* a, char* id, float val, int* h) {
     }
     return a;
 }
-void Prefixe(AVL* a,File* f){
+void Ecrire_fichier(AVL* a,File* f){
     if(a!=NULL){    
-        Prefixe(a->droite,f);
+        Ecrire_fichier(a->droite,f);
         fprintf(f,"%s;%f\n",a->identifiant,a->valeur);
-        Prefixe(a->gauche,f);
+        Ecrire_fichier(a->gauche,f);
     }
 }
         
