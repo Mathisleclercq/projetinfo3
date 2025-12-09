@@ -10,13 +10,13 @@ typedef struct AVL {
 } AVL;
 
 
-AVL* creerNoeud(char* ident, float val) {
+AVL* creerNoeud(char* id, float val) {
     AVL* nouveau = (AVL*) malloc(sizeof(AVL));
     if (nouveau == NULL) {
         printf("Erreur allocation mémoire\n");
         exit(1);
     }
-    nouveau->identifiant = ident;
+    nouveau->identifiant = id;
     nouveau->valeur = val;
     nouveau->equilibre = 0;
     nouveau->gauche = NULL;
@@ -73,16 +73,16 @@ AVL* equilibrerAVL(AVL* a) {
 }
 
 
-AVL* insertionAVL(AVL* a, char* ident, float val, int* h) {
+AVL* insertionAVL(AVL* a, char* id, float val, int* h) {
     if (a == NULL) {
         *h = 1;
         return creerNoeud(ident, val);
     }
     if (strcmp(ident, a->identifiant) < 0) {
-        a->gauche = insertionAVL(a->gauche, ident, val, h);
+        a->gauche = insertionAVL(a->gauche, id, val, h);
         *h = -*h;
     } else if (strcmp(ident, a->identifiant) > 0) {
-        a->droite = insertionAVL(a->droite, ident, val, h);
+        a->droite = insertionAVL(a->droite, id, val, h);
     } else {
         *h = 0;
        a->valeur = a->valeur + val;
@@ -98,6 +98,15 @@ AVL* insertionAVL(AVL* a, char* ident, float val, int* h) {
     }
     return a;
 }
+void Prefixe(AVL* a,File* f){
+    if(a!=NULL){    
+        Prefixe(a->droite,f);
+        fprintf(f,"%s;%f\n",a->identifiant,a->valeur);
+        Prefixe(a->gauche,f);
+    }
+}
+        
+
 int main(){
     FILE *fichier = fopen("capaciter.txt", "r");
     if (fichier == NULL){
@@ -109,4 +118,8 @@ char id[50];
 float val;
 while(fscanf(fichier,"%s %d",id,&val)==2){
     insertionAVL(a,id,val,&h);
+File* f = fopen("vol_max.dat", "w");
+if(f == NULL){
+    printf("erreur ouverture fichier");
+    exit(1);
 }
