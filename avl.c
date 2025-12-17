@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-
+#include <string.h>
 typedef struct AVL {
     char* identifiant;
     float valeur;
@@ -16,14 +16,32 @@ AVL* creerNoeud(char* id, float val) {
         printf("Erreur allocation mémoire\n");
         exit(1);
     }
-    nouveau->identifiant = id;
+    nouveau->identifiant =  strdup(id);
     nouveau->valeur = val;
     nouveau->equilibre = 0;
     nouveau->gauche = NULL;
     nouveau->droite = NULL;
-    return n;
+    return nouveau;
+}
+int min(int a, int b) {
+    if (a < b)
+        return a;
+    return b;
 }
 
+int max(int a, int b) {
+    if (a > b)
+        return a;
+    return b;
+}
+
+int min3(int a, int b, int c) {
+    return min(min(a, b), c);
+}
+
+int max3(int a, int b, int c) {
+    return max(max(a, b), c);
+}
 
 AVL* rotationGauche(AVL* a) {
     AVL* pivot = a->droite;
@@ -76,12 +94,12 @@ AVL* equilibrerAVL(AVL* a) {
 AVL* insertionAVL(AVL* a, char* id, float val, int* h) {
     if (a == NULL) {
         *h = 1;
-        return creerNoeud(ident, val);
+        return creerNoeud(id, val);
     }
-    if (strcmp(ident, a->identifiant) < 0) {
+    if (strcmp(id, a->identifiant) < 0) {
         a->gauche = insertionAVL(a->gauche, id, val, h);
         *h = -*h;
-    } else if (strcmp(ident, a->identifiant) > 0) {
+    } else if (strcmp(id, a->identifiant) > 0) {
         a->droite = insertionAVL(a->droite, id, val, h);
     } else {
         *h = 0;
@@ -98,28 +116,43 @@ AVL* insertionAVL(AVL* a, char* id, float val, int* h) {
     }
     return a;
 }
-void Ecrire_fichier(AVL* a,File* f){
+
+void Ecrire_fichier(AVL* a,FILE* f){
     if(a!=NULL){    
         Ecrire_fichier(a->droite,f);
         fprintf(f,"%s;%f\n",a->identifiant,a->valeur);
         Ecrire_fichier(a->gauche,f);
     }
 }
-        
-
 int main(){
-    FILE *fichier = fopen("capaciter.txt", "r");
-    if (fichier == NULL){
-      return 1;
+    FILE *capacite = fopen("val.txt", "r");
+    if (capacite == NULL){
+    	printf("erreur ouverture");
+      exit(1);
+    }
+    FILE *nom = fopen("id.txt", "r");
+    if (nom == NULL){
+    	printf("erreur ouverture");
+      exit(1);
     }
 AVL* a = NULL;
 int h =0;
 char id[50];
 float val;
-while(fscanf(fichier,"%s %d",id,&val)==2){
-    insertionAVL(a,id,val,&h);
-File* f = fopen("vol_max.dat", "w");
-if(f == NULL){
-    printf("erreur ouverture fichier");
-    exit(1);
+
+while ( fscanf(capacite, "%f", &val) == 1 && fgets(id, 49, nom)!= NULL) {
+	id[strcspn(id, "\r\n")] = '\0';
+	a = insertionAVL(a, id, val, &h);
+}
+
+FILE* f = fopen("vol_captation.txt", "w");
+	if(f == NULL){
+	printf("erreur ouverture fichier");
+	exit(1);
+	}
+Ecrire_fichier(a,f);
+fclose(f);
+ fclose(nom);
+ fclose(capacite);
+return 0;
 }
