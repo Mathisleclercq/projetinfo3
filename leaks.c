@@ -226,7 +226,16 @@ FILE* f = fopen("test.txt", "r");
         printf("-1\n");
         return 1;
     }
-
+    float volumeInitial = 239178.062500;
+    float pertes = calculerFuites(usine, volumeInitial);
+    FILE* f97 = fopen("vol_fuite.txt", "w");
+    if (f97 == NULL) {
+        printf("erreur ouverture fichier");
+        exit(1);
+    }
+    fprintf(f97,"%s;%f\n",usine->id, pertes);
+    return 0;
+}
     float volumeInitial = 239178.062500;
     float pertes = calculerFuites(usine, volumeInitial);
 
