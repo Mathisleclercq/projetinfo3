@@ -2,18 +2,21 @@
 #include <stdlib.h>
 #include <string.h>
 
+// Structure représentant un noeud du réseau
 typedef struct Noeud {
     char *id;
     float fuite;    
     struct Enfant *enfants;     
 } Noeud;
 
+// Liste chaînée des enfants d’un noeud
 typedef struct Enfant {
     struct Noeud *noeud;
     float fuite;
     struct Enfant *suivant;
 } Enfant;
 
+// Structure de l’arbre AVL
 typedef struct AVL {
     Noeud *noeud;
     int equilibre;
@@ -23,7 +26,7 @@ typedef struct AVL {
 
 AVL *racineAVL = NULL;
 
-
+// Fonctions utilitaires min/max
 int min(int a, int b) {
     if (a < b)
         return a;
@@ -44,6 +47,7 @@ int max3(int a, int b, int c) {
     return max(max(a, b), c);
 }
 
+// Rotations pour équilibrer l’AVL
 AVL* rotationGauche(AVL* a) {
     AVL* pivot = a->droite;
     int eq_a = a->equilibre;
@@ -82,6 +86,7 @@ AVL* doubleRotationDroite(AVL* a) {
     return rotationDroite(a);
 }
 
+// Rééquilibrage après insertion
 AVL* equilibrerAVL(AVL* a) {
     if (a->equilibre >= 2) {
         if (a->droite->equilibre >= 0)
@@ -98,6 +103,7 @@ AVL* equilibrerAVL(AVL* a) {
     return a;
 }
 
+// Création d’un nouvel élément AVL
 AVL* creerAVL(Noeud *n) {
     AVL* a = malloc(sizeof(AVL));
     if (!a) {
@@ -111,7 +117,7 @@ AVL* creerAVL(Noeud *n) {
     return a;
 }
 
-
+// Insertion dans l’arbre AVL
 AVL* insertionAVL(AVL* a, Noeud *n, int *h) {
     if (a == NULL) {
         *h = 1;
@@ -142,6 +148,8 @@ AVL* insertionAVL(AVL* a, Noeud *n, int *h) {
 
     return a;
 }
+
+// Compte le nombre d’enfants d’un noeud
 int compterEnfants(Noeud *n){
     int count = 0;
     for(Enfant *e = n->enfants; e; e = e->suivant)
@@ -149,6 +157,7 @@ int compterEnfants(Noeud *n){
     return count;
 }
 
+// Recherche d’un noeud dans l’AVL
 Noeud *chercherAVL(AVL *a, const char *id){
     if (a == NULL)
         return NULL;
@@ -161,7 +170,7 @@ Noeud *chercherAVL(AVL *a, const char *id){
     return chercherAVL(a->droite, id);
 }
 
-
+// Récupère ou crée un noeud
 Noeud *obtenirNoeud(const char *id){
     Noeud *n = chercherAVL(racineAVL, id);
     if (n != NULL)
@@ -177,7 +186,7 @@ Noeud *obtenirNoeud(const char *id){
     return n;
 }
 
-
+// Ajoute un lien parent → enfant avec fuite
 void ajouterLien(const char *parent, const char *enfant, float fuite){
     Noeud *p = obtenirNoeud(parent);
     Noeud *e = obtenirNoeud(enfant);
@@ -189,7 +198,7 @@ void ajouterLien(const char *parent, const char *enfant, float fuite){
     p->enfants = c;
 }
 
-
+// Calcul récursif des pertes de volume
 float calculFuite(Noeud *n, float volume) {
     if(n == NULL || volume <= 0)
         return 0;
@@ -202,7 +211,6 @@ float calculFuite(Noeud *n, float volume) {
 
     float volumeParEnfant = volume / nbEnfants;
 
-    // Pour chaque enfant, calculer la perte sur le tronçon
     for(Enfant *c = n->enfants; c; c = c->suivant) {
         float perteTroncon = volumeParEnfant * (c->fuite / 100.0);
         float volumeRestant = volumeParEnfant - perteTroncon;
@@ -213,6 +221,8 @@ float calculFuite(Noeud *n, float volume) {
 
     return pertesTotal;
 }
+
+// Libération mémoire
 void libererEnfants(Enfant *e){
     Enfant *tmp;
     while(e){
@@ -222,24 +232,25 @@ void libererEnfants(Enfant *e){
     }
 }
 
-
 void libererNoeud(Noeud *n) {
     if (n == NULL)
         return;
 
-    libererEnfants(n->enfants); // on libère d’abord la liste d’enfants
-    free(n->id);                 // puis l’identifiant
-    free(n);                     // enfin le noeud lui-même
+    libererEnfants(n->enfants);
+    free(n->id);
+    free(n);
 }
+
 void libererAVL(AVL *a) {
     if (a == NULL) return;
 
     libererAVL(a->gauche);
     libererAVL(a->droite);
 
-    libererNoeud(a->noeud);  // libère le noeud et sa liste d'enfants
+    libererNoeud(a->noeud);
     free(a);
 }
+
 int main(){
 FILE* f = fopen("test.txt", "r");
 	if(f == NULL){
