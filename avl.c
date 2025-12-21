@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+// Structure d’un noeud de l’arbre AVL
 typedef struct AVL {
     char* identifiant;
     float valeur;
@@ -10,7 +12,7 @@ typedef struct AVL {
     struct AVL* droite;
 } AVL;
 
-
+// Création d’un nouveau noeud AVL
 AVL* creerNoeud(char* id, float val,float valreal) {
     AVL* nouveau = (AVL*) malloc(sizeof(AVL));
     if (nouveau == NULL) {
@@ -25,6 +27,8 @@ AVL* creerNoeud(char* id, float val,float valreal) {
     nouveau->droite = NULL;
     return nouveau;
 }
+
+// Fonctions utilitaires min / max
 int min(int a, int b) {
     if (a < b)
         return a;
@@ -45,6 +49,7 @@ int max3(int a, int b, int c) {
     return max(max(a, b), c);
 }
 
+// Rotations utilisées pour équilibrer l’arbre AVL
 AVL* rotationGauche(AVL* a) {
     AVL* pivot = a->droite;
     int eq_a = a->equilibre;
@@ -55,6 +60,7 @@ AVL* rotationGauche(AVL* a) {
     pivot->equilibre = min3(eq_a - 2, eq_a + eq_p - 2, eq_p - 1);
     return pivot;
 }
+
 AVL* rotationDroite(AVL* a) {
     AVL* pivot = a->gauche;
     int eq_a = a->equilibre;
@@ -76,6 +82,7 @@ AVL* doubleRotationDroite(AVL* a) {
     return rotationDroite(a);
 }
 
+// Rééquilibrage de l’arbre après insertion
 AVL* equilibrerAVL(AVL* a) {
     if (a->equilibre >= 2) {
         if (a->droite->equilibre >= 0)
@@ -92,7 +99,7 @@ AVL* equilibrerAVL(AVL* a) {
     return a;
 }
 
-
+// Insertion d’un élément dans l’arbre AVL
 AVL* insertionAVL(AVL* a, char* id, float val,float valreal, int* h) {
     if (a == NULL) {
         *h = 1;
@@ -105,8 +112,8 @@ AVL* insertionAVL(AVL* a, char* id, float val,float valreal, int* h) {
         a->droite = insertionAVL(a->droite, id, val,valreal, h);
     } else {
         *h = 0;
-       a->valeur = a->valeur + val;
-       a->valeurreal = a->valeurreal + valreal;
+        a->valeur = a->valeur + val;
+        a->valeurreal = a->valeurreal + valreal;
         return a; 
     }
     if (*h != 0) {
@@ -120,6 +127,7 @@ AVL* insertionAVL(AVL* a, char* id, float val,float valreal, int* h) {
     return a;
 }
 
+// Écriture des valeurs dans un fichier (parcours décroissant)
 void Ecrire_fichier(AVL* a,FILE* f){
     if(a!=NULL){    
         Ecrire_fichier(a->droite,f);
@@ -127,6 +135,8 @@ void Ecrire_fichier(AVL* a,FILE* f){
         Ecrire_fichier(a->gauche,f);
     }
 }
+
+// Écriture des valeurs réelles après fuite
 void Ecrire_fichierR(AVL* a,FILE* f){
     if(a!=NULL){    
         Ecrire_fichierR(a->droite,f);
@@ -134,6 +144,8 @@ void Ecrire_fichierR(AVL* a,FILE* f){
         Ecrire_fichierR(a->gauche,f);
     }
 }
+
+// Libération de la mémoire de l’arbre AVL
 void libererAVL(AVL* a) {
     if (a == NULL) return;
     libererAVL(a->gauche);
@@ -141,53 +153,59 @@ void libererAVL(AVL* a) {
     free(a->identifiant);
     free(a);
 }
+
 int main(){
     FILE *capacite = fopen("sources_volumes.dat", "r");
     if (capacite == NULL){
-    	printf("erreur ouverture");
-      exit(1);
+        printf("erreur ouverture");
+        exit(1);
     }
     FILE *nom = fopen("plants_id.dat", "r");
     if (nom == NULL){
-    	printf("erreur ouverture");
-      exit(1);
+        printf("erreur ouverture");
+        exit(1);
     }
-  FILE *Ffuite = fopen("sources_leaks.dat", "r");
+    FILE *Ffuite = fopen("sources_leaks.dat", "r");
     if (Ffuite == NULL){
-    	printf("erreur ouverture");
-      exit(1);
-      }
-  FILE* f = fopen("vol_captation.txt", "w");
-	if(f == NULL){
-	printf("erreur ouverture fichier");
-	exit(1);
-	}
-FILE* f2 = fopen("vol_traitement.tmp", "w");
-	if(f == NULL){
-	printf("erreur ouverture fichier");
-	exit(1);
-	}
-AVL* a = NULL;
-int h =0;
-char id[50];
-float val;
-float fuite;
-float valreal;
-fgets(id, 49, nom);
-fprintf(f,"%s",id);
-fgets(id, 49,capacite);
-fprintf(f2,"%s",id);
-fgets(id, 49, Ffuite);
-while ( fscanf(capacite, "%f", &val) == 1 && fgets(id, 49, nom)!= NULL && fscanf(Ffuite, "%f", &fuite)==1) {
-	id[strcspn(id, "\r\n")] = '\0';
-	valreal = val * (1 - fuite/100);
-	
-	a = insertionAVL(a, id, val,valreal, &h);
-}
+        printf("erreur ouverture");
+        exit(1);
+    }
 
-Ecrire_fichierR(a,f2);
-Ecrire_fichier(a,f);
-fclose(f);
+    FILE* f = fopen("vol_captation.txt", "w");
+    if(f == NULL){
+        printf("erreur ouverture fichier");
+        exit(1);
+    }
+    FILE* f2 = fopen("vol_traitement.tmp", "w");
+    if(f == NULL){
+        printf("erreur ouverture fichier");
+        exit(1);
+    }
+
+    AVL* a = NULL;
+    int h =0;
+    char id[50];
+    float val;
+    float fuite;
+    float valreal;
+
+    fgets(id, 49, nom);
+    fprintf(f,"%s",id);
+    fgets(id, 49,capacite);
+    fprintf(f2,"%s",id);
+    fgets(id, 49, Ffuite);
+
+    // Lecture des fichiers et insertion dans l’arbre AVL
+    while ( fscanf(capacite, "%f", &val) == 1 && fgets(id, 49, nom)!= NULL && fscanf(Ffuite, "%f", &fuite)==1) {
+        id[strcspn(id, "\r\n")] = '\0';
+        valreal = val * (1 - fuite/100);
+        a = insertionAVL(a, id, val,valreal, &h);
+    }
+
+    Ecrire_fichierR(a,f2);
+    Ecrire_fichier(a,f);
+
+    fclose(f);
     fclose(f2);
     fclose(nom);
     fclose(capacite);
@@ -195,5 +213,6 @@ fclose(f);
 
     libererAVL(a);
     a = NULL;
-return 0;
+    return 0;
 }
+
