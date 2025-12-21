@@ -142,6 +142,12 @@ AVL* insertionAVL(AVL* a, Noeud *n, int *h) {
 
     return a;
 }
+int compterEnfants(Noeud *n){
+    int count = 0;
+    for(Enfant *e = n->enfants; e; e = e->suivant)
+        count++;
+    return count;
+}
 
 Noeud *chercherAVL(AVL *a, const char *id){
     if (a == NULL)
@@ -184,27 +190,56 @@ void ajouterLien(const char *parent, const char *enfant, float fuite){
 }
 
 
-float calculerFuites(Noeud *n, float volume) {
-       if (n == NULL || volume <= 0)
+float calculFuite(Noeud *n, float volume) {
+    if(n == NULL || volume <= 0)
         return 0;
 
-    float pertes = 0;
-    Enfant *e = n->enfants;
+    float pertesTotal = 0;
+    int nbEnfants = compterEnfants(n);
+    
+    if(nbEnfants == 0)
+        return 0;
 
-    while (e != NULL) {
-        float volumeFuite = volume * e->fuite;
-        pertes += volumeFuite;
+    float volumeParEnfant = volume / nbEnfants;
 
-        float volumeRestant = volume - volumeFuite;
-        pertes += calculerFuites(e->noeud, volumeRestant);
-
-        e = e->suivant;
+    // Pour chaque enfant, calculer la perte sur le tronçon
+    for(Enfant *c = n->enfants; c; c = c->suivant) {
+        float perteTroncon = volumeParEnfant * (c->fuite / 100.0);
+        float volumeRestant = volumeParEnfant - perteTroncon;
+        
+        pertesTotal += perteTroncon;
+        pertesTotal += calculFuite(c->noeud, volumeRestant);
     }
 
-    return pertes;
+    return pertesTotal;
+}
+void libererEnfants(Enfant *e){
+    Enfant *tmp;
+    while(e){
+        tmp = e;
+        e = e->suivant;
+        free(tmp);
+    }
 }
 
 
+void libererNoeud(Noeud *n) {
+    if (n == NULL)
+        return;
+
+    libererEnfants(n->enfants); // on libère d’abord la liste d’enfants
+    free(n->id);                 // puis l’identifiant
+    free(n);                     // enfin le noeud lui-même
+}
+void libererAVL(AVL *a) {
+    if (a == NULL) return;
+
+    libererAVL(a->gauche);
+    libererAVL(a->droite);
+
+    libererNoeud(a->noeud);  // libère le noeud et sa liste d'enfants
+    free(a);
+}
 int main(){
 FILE* f = fopen("test.txt", "r");
 	if(f == NULL){
@@ -212,33 +247,33 @@ FILE* f = fopen("test.txt", "r");
 	exit(1);
 	}
 	
+   char W[200];
+    float Z;
     char A[200], B[200];
     float fuite;
+    fscanf(f, "%[^;];%f\n", W,&Z);
 
     while (fscanf(f, "%[^;];%[^;];%f\n", A, B, &fuite) == 3){
         ajouterLien(A, B, fuite);
-       printf("%s",A);
+       
     }
-    fclose(f);
+   
     
-    Noeud *usine = chercherAVL(racineAVL, A);
-    if (!usine){
-        printf("-1\n");
-        return 1;
-    }
-    float volumeInitial = 239178.062500;
-    float pertes = calculerFuites(usine, volumeInitial);
-    FILE* f97 = fopen("vol_fuite.txt", "w");
+    Noeud *usine =  chercherAVL(racineAVL, W);
+   
+    float volumeInitial = Z;
+    float pertes = calculFuite(usine, volumeInitial);
+    FILE* f97 = fopen("vol_fuite.txt", "a");
     if (f97 == NULL) {
         printf("erreur ouverture fichier");
         exit(1);
     }
-    fprintf(f97,"%s;%f\n",usine->id, pertes);
-    return 0;
-}
-    float volumeInitial = 239178.062500;
-    float pertes = calculerFuites(usine, volumeInitial);
+    fprintf(f97, "%s;%.2f\n", W, pertes);
+libererAVL(racineAVL);
+racineAVL = NULL;    
+fclose(f);
+fclose(f97);
+return 0;
 
-    printf("%f\n", pertes);
-    return 0;
 }
+ 
